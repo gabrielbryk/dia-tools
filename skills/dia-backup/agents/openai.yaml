@@ -1,0 +1,4 @@
+interface:
+  display_name: "Back Up Dia Stores"
+  short_description: "Create validated encrypted Dia database backups"
+  default_prompt: "Use $dia-backup to back up my Default profile tabs store."

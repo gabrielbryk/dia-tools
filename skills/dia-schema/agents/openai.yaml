@@ -1,0 +1,4 @@
+interface:
+  display_name: "Explore Dia Schemas"
+  short_description: "Extract SQL and JSON schemas into an offline UI"
+  default_prompt: "Use $dia-schema to build a searchable explorer for my Dia stores."

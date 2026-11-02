@@ -1,0 +1,1153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Dia · Explorer</title>
+    <style>
+      :root {
+        --bg: #f5f6f3;
+        --panel: #fff;
+        --ink: #202923;
+        --muted: #667369;
+        --line: #e2e7df;
+        --accent: #28634a;
+        --tint: #eaf3ed;
+        --amber: #916321;
+        --amberbg: #fbf4e6;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:disabled {
+        cursor: default;
+        opacity: 0.5;
+      }
+      button,
+      input,
+      select,
+      a {
+        outline-offset: 3px;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+      }
+      a {
+        color: var(--accent);
+      }
+      .topbar {
+        height: 76px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        padding: 0 28px;
+        gap: 18px;
+        position: sticky;
+        top: 0;
+        z-index: 30;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+      .logo {
+        height: 38px;
+        width: 38px;
+        background: var(--accent);
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        color: white;
+        font:
+          600 24px Georgia,
+          serif;
+      }
+      .brand-title {
+        font-size: 16px;
+        font-weight: 650;
+        letter-spacing: -0.4px;
+      }
+      .brand-sub {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .search-wrap {
+        position: relative;
+        max-width: 510px;
+        flex: 1;
+        margin: auto;
+      }
+      .search-wrap input {
+        width: 100%;
+        padding: 11px 58px 11px 38px;
+        background: #f5f7f3;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      .search-icon {
+        position: absolute;
+        left: 13px;
+        top: 11px;
+        color: var(--muted);
+      }
+      .shortcut {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        color: #68766b;
+        font-size: 11px;
+        border: 1px solid #d5ddd4;
+        border-radius: 4px;
+        padding: 2px 5px;
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: white;
+        color: var(--ink);
+        padding: 7px 12px;
+        border-radius: 7px;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        background: #f2f5ef;
+      }
+      .btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+      }
+      .btn.small {
+        font-size: 12px;
+        padding: 5px 9px;
+      }
+      .top-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .export {
+        position: relative;
+      }
+      .export-panel {
+        position: absolute;
+        right: 0;
+        top: 42px;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        width: 230px;
+        box-shadow: 0 12px 28px #23322420;
+        padding: 6px;
+      }
+      .export-panel button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 10px;
+        border: 0;
+        background: white;
+        border-radius: 5px;
+      }
+      .export-panel button:hover {
+        background: var(--tint);
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .metrics {
+        padding: 21px 28px;
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        border-bottom: 1px solid var(--line);
+        background: #fafbf8;
+      }
+      .metric {
+        display: flex;
+        gap: 9px;
+        align-items: baseline;
+        white-space: nowrap;
+      }
+      .metric strong {
+        font-size: 23px;
+        font-weight: 630;
+        letter-spacing: -0.8px;
+      }
+      .metric span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .snapshot {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: right;
+      }
+      .dot {
+        display: inline-block;
+        background: #50956b;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 258px minmax(0, 1fr);
+        min-height: calc(100vh - 154px);
+      }
+      .sidebar {
+        border-right: 1px solid var(--line);
+        background: #f9faf7;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 76px;
+        max-height: calc(100vh - 76px);
+        align-self: start;
+      }
+      .side-top {
+        padding: 20px 18px 12px;
+      }
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 1.6px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+      .side-top select,
+      .side-top input {
+        width: 100%;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 8px;
+        margin-top: 9px;
+        font-size: 12px;
+      }
+      .store-list {
+        overflow: auto;
+        padding: 0 9px 14px;
+        flex: 1;
+      }
+      .profile-label {
+        padding: 15px 10px 7px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.3px;
+        text-transform: uppercase;
+      }
+      .store-button {
+        width: 100%;
+        border: 1px solid transparent;
+        background: none;
+        text-align: left;
+        display: block;
+        padding: 10px;
+        border-radius: 8px;
+        margin: 2px 0;
+        color: var(--ink);
+      }
+      .store-button:hover {
+        background: #eff3ec;
+      }
+      .store-button.active {
+        background: var(--tint);
+        border-color: #cddfd0;
+        color: #204f38;
+      }
+      .store-name {
+        font-size: 12px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+      }
+      .store-meta {
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      .side-bottom {
+        font-size: 10px;
+        color: var(--muted);
+        padding: 12px 18px;
+        border-top: 1px solid var(--line);
+      }
+      .main {
+        padding: 26px 28px 40px;
+        min-width: 0;
+        max-width: 1500px;
+        width: 100%;
+        margin: auto;
+      }
+      .db-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: start;
+        margin-bottom: 18px;
+      }
+      .db-head h1 {
+        font-size: 26px;
+        font-weight: 620;
+        letter-spacing: -0.8px;
+        margin: 0 0 6px;
+        line-height: 1.25;
+      }
+      .db-path {
+        font: 11px/1.7 var(--mono);
+        color: var(--muted);
+        overflow-wrap: anywhere;
+      }
+      .db-meta {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 10px;
+      }
+      .pill {
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 5px;
+        background: #eff2ec;
+        color: #5f6d62;
+        border: 1px solid var(--line);
+      }
+      .pill.green {
+        background: var(--tint);
+        color: #256046;
+        border-color: #d5e5d9;
+      }
+      .pill.amber {
+        background: var(--amberbg);
+        color: var(--amber);
+        border-color: #eadfbf;
+      }
+      .pill.mono {
+        font-family: var(--mono);
+      }
+      .db-info {
+        font-size: 11px;
+        max-width: 300px;
+        color: var(--muted);
+        text-align: right;
+      }
+      .tabs {
+        display: flex;
+        gap: 22px;
+        border-bottom: 1px solid var(--line);
+        margin: 0 0 19px;
+      }
+      .tab {
+        background: none;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        padding: 10px 1px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 550;
+      }
+      .tab.active {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .count {
+        font-size: 10px;
+        margin-left: 5px;
+        padding: 1px 5px;
+        background: #eaf0e7;
+        border-radius: 4px;
+      }
+      .workspace {
+        display: grid;
+        grid-template-columns: 238px minmax(0, 1fr);
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        min-height: 590px;
+      }
+      .item-pane {
+        background: #fcfdfb;
+        border-right: 1px solid var(--line);
+        min-width: 0;
+      }
+      .item-heading {
+        padding: 15px 14px;
+        border-bottom: 1px solid var(--line);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .item-heading input {
+        font: 11px var(--mono);
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        width: 100%;
+        padding: 7px;
+        margin-top: 9px;
+        background: white;
+      }
+      .item-heading select {
+        width: 100%;
+        padding: 6px;
+        margin-top: 8px;
+        font-size: 11px;
+        border: 1px solid var(--line);
+        background: white;
+        border-radius: 5px;
+      }
+      .items {
+        max-height: 670px;
+        overflow: auto;
+        padding: 7px;
+      }
+      .item-button {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        text-align: left;
+        border-radius: 6px;
+        padding: 10px 9px;
+        margin-bottom: 2px;
+        color: var(--ink);
+      }
+      .item-button:hover {
+        background: #eff4ed;
+      }
+      .item-button.active {
+        background: var(--tint);
+      }
+      .item-name {
+        display: block;
+        font: 11px/1.6 var(--mono);
+        overflow-wrap: anywhere;
+      }
+      .item-meta {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+      .detail {
+        padding: 22px;
+        min-width: 0;
+      }
+      .detail-header {
+        display: flex;
+        gap: 12px;
+        align-items: start;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .detail-header h2 {
+        font: 600 15px/1.5 var(--mono);
+        margin: 0;
+        overflow-wrap: anywhere;
+      }
+      .detail-sub {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .actions {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+      .note {
+        background: #f6f8f3;
+        border: 1px solid #e4eadd;
+        color: #66705c;
+        padding: 11px 13px;
+        border-radius: 7px;
+        font-size: 11px;
+        margin: 12px 0 17px;
+      }
+      .note.inferred {
+        background: #fbf8ef;
+        border-color: #eee7d3;
+        color: #786438;
+      }
+      .segment {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 13px;
+      }
+      .segment button {
+        font-size: 11px;
+        padding: 6px 11px;
+        background: white;
+        border: 0;
+        color: var(--muted);
+      }
+      .segment button.active {
+        background: #edf3eb;
+        color: #245a3e;
+      }
+      .codebox {
+        margin: 0;
+        background: #f7f9f5;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 15px;
+        font: 11px/1.8 var(--mono);
+        overflow: auto;
+        max-height: 620px;
+        white-space: pre;
+      }
+      .sqlcode {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .section-label {
+        margin: 21px 0 9px;
+        font-size: 11px;
+        font-weight: 650;
+        color: var(--muted);
+        letter-spacing: 0.7px;
+        text-transform: uppercase;
+      }
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 11px;
+      }
+      th {
+        background: #f6f8f3;
+        font-size: 10px;
+        font-weight: 650;
+        white-space: nowrap;
+        color: var(--muted);
+        padding: 9px 11px;
+        border-bottom: 1px solid var(--line);
+      }
+      td {
+        padding: 10px 11px;
+        border-bottom: 1px solid #edf0e9;
+        vertical-align: top;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      td.code {
+        font-family: var(--mono);
+        font-size: 11px;
+        overflow-wrap: anywhere;
+      }
+      .nullable {
+        color: var(--muted);
+      }
+      .keymark {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        background: #eaf0e2;
+        color: #5c743f;
+        padding: 2px 4px;
+        border-radius: 3px;
+        margin-left: 5px;
+      }
+      .link-button {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--accent);
+        text-align: left;
+        font: inherit;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .smalltext {
+        font-size: 11px;
+      }
+      .schema-tree {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 9px 12px;
+        font: 12px/1.7 var(--mono);
+        overflow: auto;
+        max-height: 620px;
+      }
+      .schema-node {
+        margin-left: 18px;
+        border-left: 1px solid #e5eadf;
+        padding-left: 12px;
+      }
+      .schema-tree > .schema-node {
+        margin-left: 0;
+        border-left: 0;
+        padding-left: 0;
+      }
+      .schema-node summary {
+        cursor: pointer;
+        list-style: none;
+        min-height: 31px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 3px 0;
+        flex-wrap: wrap;
+      }
+      .schema-node summary::-webkit-details-marker {
+        display: none;
+      }
+      .schema-node summary::before {
+        content: '›';
+        display: inline-block;
+        color: #788775;
+        font: 16px var(--mono);
+        width: 10px;
+        transition: transform 0.1s;
+      }
+      .schema-node[open] > summary::before {
+        transform: rotate(90deg);
+      }
+      .leaf {
+        min-height: 31px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 3px 0 3px 16px;
+      }
+      .field-name {
+        font-weight: 550;
+        overflow-wrap: anywhere;
+      }
+      .type-chip {
+        font: 10px var(--mono);
+        padding: 1px 6px;
+        border-radius: 4px;
+        background: #eff0fb;
+        color: #5d6092;
+      }
+      .type-chip.object,
+      .type-chip.array {
+        background: #e8f1ec;
+        color: #3d7155;
+      }
+      .type-chip.boolean {
+        background: #f6eddf;
+        color: #8a6c31;
+      }
+      .type-chip.integer,
+      .type-chip.number {
+        background: #e6f0f4;
+        color: #426d83;
+      }
+      .type-chip.null {
+        background: #eee;
+        color: #747a74;
+      }
+      .observed {
+        font:
+          10px -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        color: #869080;
+        margin-left: 3px;
+      }
+      .unknown {
+        font:
+          11px -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        color: var(--muted);
+        padding: 5px 0;
+      }
+      .empty {
+        padding: 38px 25px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .empty h3 {
+        color: var(--ink);
+        font-size: 16px;
+        margin: 0 0 8px;
+      }
+      .relationships {
+        padding: 22px;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      .graph {
+        overflow: auto;
+        background: #f9fbf7;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        margin: 15px 0;
+      }
+      .graph svg {
+        display: block;
+      }
+      .graph-node {
+        cursor: pointer;
+      }
+      .graph-node:hover rect {
+        fill: #e7f0e7;
+        stroke: #81a58b;
+      }
+      .coverage-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .card {
+        border: 1px solid var(--line);
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+      }
+      .card h2 {
+        font-size: 15px;
+        margin: 0 0 10px;
+      }
+      .card p,
+      .card li {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .card ul {
+        padding-left: 18px;
+      }
+      .definition-list {
+        margin: 0;
+      }
+      .definition-list div {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        font-size: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid #eef0eb;
+      }
+      .definition-list dt {
+        color: var(--muted);
+      }
+      .definition-list dd {
+        margin: 0;
+        font-weight: 600;
+      }
+      .search-results {
+        margin-top: 15px;
+      }
+      .result {
+        border: 1px solid var(--line);
+        background: white;
+        padding: 16px;
+        border-radius: 9px;
+        margin-bottom: 8px;
+        display: block;
+        width: 100%;
+        text-align: left;
+      }
+      .result:hover {
+        border-color: #9fbaa5;
+        background: #fbfdf9;
+      }
+      .result strong {
+        font: 600 13px var(--mono);
+        overflow-wrap: anywhere;
+      }
+      .result small {
+        display: block;
+        color: var(--muted);
+        margin-top: 6px;
+        font-size: 11px;
+      }
+      .result .pill {
+        float: right;
+        margin-left: 15px;
+      }
+      .search-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        align-items: center;
+      }
+      .search-head h1 {
+        font-size: 22px;
+        margin: 0 0 7px;
+      }
+      dialog {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        max-width: 630px;
+        width: calc(100% - 30px);
+        padding: 26px;
+        box-shadow: 0 25px 90px #1e332d30;
+      }
+      dialog::backdrop {
+        background: #1c302855;
+        backdrop-filter: blur(2px);
+      }
+      dialog h2 {
+        margin: 0 0 14px;
+        font-size: 21px;
+      }
+      dialog p,
+      dialog li {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .dialog-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+      }
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 18px;
+        background: #253e2f;
+        color: white;
+        border-radius: 8px;
+        font-size: 12px;
+        box-shadow: 0 4px 20px #0002;
+        z-index: 60;
+      }
+      .mobile-nav {
+        display: none;
+      }
+      .footer {
+        margin-top: 18px;
+        color: #798374;
+        font-size: 10px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .mobile-close {
+        display: none;
+      }
+      @media (min-width: 1700px) {
+        .main {
+          padding: 32px 42px;
+        }
+        .workspace {
+          grid-template-columns: 280px 1fr;
+        }
+      }
+      @media (max-width: 1100px) {
+        .topbar {
+          gap: 12px;
+          padding: 0 18px;
+        }
+        .brand-sub {
+          display: none;
+        }
+        .top-actions #about {
+          display: none;
+        }
+        .layout {
+          grid-template-columns: 220px minmax(0, 1fr);
+        }
+        .main {
+          padding: 22px 18px;
+        }
+        .workspace {
+          grid-template-columns: 200px minmax(0, 1fr);
+        }
+        .metrics {
+          gap: 18px;
+          padding: 17px 18px;
+        }
+        .metric strong {
+          font-size: 20px;
+        }
+        .snapshot {
+          display: none;
+        }
+        .detail {
+          padding: 16px;
+        }
+        .detail-header {
+          flex-direction: column;
+        }
+        .db-info {
+          display: none;
+        }
+      }
+      @media (max-width: 760px) {
+        .topbar {
+          height: auto;
+          min-height: 72px;
+          flex-wrap: wrap;
+          padding: 13px 15px;
+          gap: 12px;
+        }
+        .brand {
+          flex: 1;
+        }
+        .brand-title {
+          font-size: 15px;
+        }
+        .search-wrap {
+          order: 3;
+          flex-basis: 100%;
+          max-width: none;
+        }
+        .top-actions {
+          margin-left: auto;
+        }
+        .shortcut {
+          display: none;
+        }
+        .mobile-nav {
+          display: block;
+        }
+        .metrics {
+          padding: 13px 15px;
+          gap: 20px;
+          overflow: auto;
+        }
+        .metric strong {
+          font-size: 19px;
+        }
+        .metric span {
+          font-size: 10px;
+        }
+        .layout {
+          display: block;
+        }
+        .sidebar {
+          display: none;
+          position: fixed;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          width: min(320px, 90vw);
+          max-height: 100vh;
+          z-index: 50;
+          box-shadow: 0 0 0 100vw #13241977;
+        }
+        .sidebar.open {
+          display: flex;
+        }
+        .mobile-close {
+          display: block;
+          margin-left: auto;
+        }
+        .main {
+          padding: 20px 13px;
+        }
+        .db-head h1 {
+          font-size: 23px;
+        }
+        .tabs {
+          gap: 16px;
+          overflow: auto;
+        }
+        .tab {
+          font-size: 12px;
+          white-space: nowrap;
+        }
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+        .item-pane {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .items {
+          max-height: 170px;
+        }
+        .item-heading {
+          padding: 12px;
+        }
+        .item-heading input {
+          margin-top: 6px;
+        }
+        .detail {
+          padding: 16px;
+        }
+        .coverage-grid {
+          grid-template-columns: 1fr;
+        }
+        .schema-tree {
+          font-size: 11px;
+          padding: 8px;
+        }
+        .schema-node {
+          margin-left: 10px;
+          padding-left: 8px;
+        }
+        .observed {
+          display: none;
+        }
+        .type-chip {
+          font-size: 9px;
+        }
+        .footer {
+          flex-direction: column;
+        }
+      }
+    </style>
+    <style>
+      __PROFILE_CSS__
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">D</div>
+        <div>
+          <div class="brand-title" id="brandTitle">Dia · Schema Explorer</div>
+          <div class="brand-sub">An inside look at the store</div>
+        </div>
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon" aria-hidden="true">⌕</span
+        ><input
+          id="globalSearch"
+          type="search"
+          aria-label="Search all schemas"
+          placeholder="Search tables, keys, or JSON fields…"
+          autocomplete="off"
+        /><span class="shortcut">⌘ K</span>
+      </div>
+      <div class="top-actions">
+        <button class="btn mobile-nav" id="mobileNav">Databases</button
+        ><button class="btn" id="about">About inference</button>
+        <div class="export">
+          <button class="btn primary" id="exportToggle" aria-expanded="false">Export ↓</button>
+          <div class="export-panel" id="exportPanel" hidden>
+            <button data-export="catalog">Full schema catalog · JSON</button
+            ><button data-export="json">JSON Schema bundle</button
+            ><button data-export="sql">All SQL definitions · SQL</button>
+          </div>
+        </div>
+      </div>
+    </header>
+    <nav id="viewBar" class="view-bar" hidden>
+      <div class="view-tabs">
+        <button data-view="profiles">Profiles & contents</button
+        ><button data-view="schema">Schemas & relationships</button>
+      </div>
+      <span class="pill">Private local snapshot · Read only</span>
+    </nav>
+    <section class="metrics" id="metrics" aria-label="Extraction summary"></section>
+    <div class="layout">
+      <aside class="sidebar" id="sidebar">
+        <button class="btn small mobile-close" id="closeNav">Close</button>
+        <div id="profileNav" hidden></div>
+        <div id="schemaNav">
+          <div class="side-top">
+            <div class="eyebrow">Databases</div>
+            <select id="profileFilter" aria-label="Filter by profile"></select
+            ><input
+              type="search"
+              id="storeFilter"
+              aria-label="Filter database names"
+              placeholder="Filter database names…"
+            />
+          </div>
+          <nav class="store-list" id="storeList" aria-label="Database list"></nav>
+          <div class="side-bottom"><span class="dot"></span>Local snapshot · Schema metadata</div>
+        </div>
+      </aside>
+      <main class="main" id="main"></main>
+    </div>
+    <dialog id="aboutDialog">
+      <div class="dialog-top">
+        <h2>What these schemas tell you</h2>
+        <button class="btn small" id="closeDialog">Close</button>
+      </div>
+      <p>
+        <strong>SQL metadata is extracted directly.</strong> Tables, columns, declared defaults,
+        indexes, foreign keys, views, and triggers come from each database’s own definitions.
+      </p>
+      <p>
+        <strong>JSON shapes are inferred from stored examples.</strong> Every parseable JSON example
+        was checked against its inferred schema. This does not establish all valid future values,
+        required fields, or enum options. Inferred payload schemas do not assert required fields;
+        row projections retain declared SQL constraints.
+      </p>
+      <p>
+        Identifier-like JSON object keys are generalized into map values. Empty tables, opaque
+        binary values, and empty arrays may leave a shape unknown. JSON-looking scalars are labeled
+        as candidates because valid JSON syntax alone does not prove the serialization format.
+      </p>
+      <p>
+        All browsing happens in this self-contained file.
+        <span id="aboutPrivacy">Schema-only exports omit stored values.</span>
+      </p>
+      <p id="aboutScope"></p>
+      <p>
+        <a href="https://json-schema.org/draft/2020-12" target="_blank" rel="noopener noreferrer"
+          >JSON Schema Draft 2020-12 reference ↗</a
+        >
+      </p>
+    </dialog>
+    <dialog id="profileDetails">
+      <div class="dialog-top">
+        <h2 id="pDetailTitle">Record</h2>
+        <div class="actions">
+          <button class="btn small" data-p-action="copy-details">Copy JSON</button
+          ><button class="btn small" data-p-action="close-details">Close</button>
+        </div>
+      </div>
+      <pre id="pDetailCode" class="codebox"></pre>
+    </dialog>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <script type="application/json" id="catalogData">
+      __CATALOG_DATA__
+    </script>
+    <script>
+      __BROWSER_CODE__;
+    </script>
+  </body>
+</html>

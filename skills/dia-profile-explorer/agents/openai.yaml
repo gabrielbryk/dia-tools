@@ -1,0 +1,4 @@
+interface:
+  display_name: "Explore Dia Profiles"
+  short_description: "Browse folders, tab URLs, and stored profile data"
+  default_prompt: "Use $dia-profile-explorer to build an offline viewer of my folders and their URLs."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Edit Dia Folder Icons"
+  short_description: "Plan and apply native Dia folder symbols"
+  default_prompt: "Use $dia-folder-icons to replace folder emojis with native folder symbols."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dia Layout"
+  short_description: "Plan saved folders and spaces from usage evidence"
+  default_prompt: "Use $dia-layout to review my saved Dia tabs and propose a clearer folder and space layout using Arc and Dia history."

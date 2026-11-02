@@ -1,0 +1,4 @@
+interface:
+  display_name: "Inspect Dia"
+  short_description: "Inspect Dia stores, keys, and database structure"
+  default_prompt: "Use $dia-inspect to locate the store for my browser preference."

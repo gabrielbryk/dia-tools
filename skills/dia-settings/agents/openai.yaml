@@ -1,0 +1,4 @@
+interface:
+  display_name: "Edit Dia Settings"
+  short_description: "Safely patch typed Dia browser preferences"
+  default_prompt: "Use $dia-settings to change my Dia sidebar width to 320."

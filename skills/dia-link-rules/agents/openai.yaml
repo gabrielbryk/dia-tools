@@ -1,0 +1,3 @@
+interface:
+  display_name: "Dia Link Rules"
+  short_description: "Inspect and edit Dia incoming-link routing rules"

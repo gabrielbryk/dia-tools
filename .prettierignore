@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.build/
+bun.lock
+src/ui-bundle.ts
+docs/BUN-LICENSE.md
+artifacts/
+plans/
+skills/*/agents/openai.yaml
